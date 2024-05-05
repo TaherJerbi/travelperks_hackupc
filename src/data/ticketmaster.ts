@@ -117,16 +117,30 @@ export const SEGMENTS = [
 const API_KEY = "oGWo9O2GhBZZAdCV1xAAs9FUrClY0QQn";
 const SEARCH_EVENTS_URL = `https://app.ticketmaster.com/discovery/v2/events`;
 export async function getEvents(city: string, genres: Genre[]) {
-  const events: Event[] = [];
+  const events: TicketmasterEvent[] = [];
   for (const genre of genres) {
     const response = await fetch(
       `${SEARCH_EVENTS_URL}.json?apikey=${API_KEY}&city=${city}&keyword=${genre}`
     );
+    if (!response.ok) {
+      console.error(`Failed to fetch events for genre: ${genre}`);
+      continue;
+    }
     const data = await response.json();
-    events.push(...data._embedded.events);
+    events.push(...(data?._embedded?.events ?? []));
+  }
+  // Filter out duplicate events
+  const ids = new Set<string>(events.map((event) => event.id));
+
+  const uniqueEvents = [];
+  for (const event of events) {
+    if (ids.has(event.id)) {
+      uniqueEvents.push(event);
+      ids.delete(event.id);
+    }
   }
 
-  return events;
+  return uniqueEvents;
 }
 
 interface Image {
@@ -226,7 +240,7 @@ interface Embedded {
   venues: Venue[];
 }
 
-interface Event {
+export type TicketmasterEvent = {
   name: string;
   type: string; // Will always be "event"
   id: string;
@@ -247,4 +261,4 @@ interface Event {
   }[];
   _links: Links;
   _embedded: Embedded;
-}
+};

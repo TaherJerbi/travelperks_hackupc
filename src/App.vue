@@ -1,6 +1,6 @@
 <template>
   <div class="w-screen h-screen">
-    <div class="onboarding shadow-4 px-5 py-4 border-round-xl mx-5">
+    <div class="onboarding shadow-4 px-4 py-4 border-round-xl mx-3">
       <OnboardingForm />
     </div>
   </div>

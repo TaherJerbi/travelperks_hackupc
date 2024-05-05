@@ -1,46 +1,30 @@
-const SEGMENTS = [
+export type Genre = (typeof SEGMENTS)[number]["genres"][number];
+export const SEGMENTS = [
   {
     name: "Miscellaneous",
     genres: [
       "Casino/Gaming",
-      "Comedy",
-      "Community/Civic",
-      "Community/Cultural",
       "Fairs & Festivals",
-      "Family",
       "Food & Drink",
-      "Health/Wellness",
-      "Hobby/Special Interest Expos",
-      "Holiday",
       "Ice Shows",
       "Lecture/Seminar",
-      "Multimedia",
       "Psychics/Mediums/Hypnotists",
-      "Special Interest/Hobby",
-      "Undefined",
     ],
   },
   {
     name: "Sports",
     genres: [
-      "Aquatics",
       "Athletic Races",
       "Badminton",
-      "Bandy",
       "Baseball",
       "Basketball",
-      "Biathlon",
       "Body Building",
       "Boxing",
       "Cricket",
-      "Curling",
       "Cycling",
       "Equestrian",
       "eSports",
-      "Extreme",
-      "Field Hockey",
       "Fitness",
-      "Floorball",
       "Football",
       "Golf",
       "Gymnastics",
@@ -52,12 +36,7 @@ const SEGMENTS = [
       "Martial Arts",
       "Miscellaneous",
       "Motorsports/Racing",
-      "Netball",
-      "Rodeo",
-      "Roller Derby",
-      "Roller Hockey",
       "Rugby",
-      "Ski Jumping",
       "Skiing",
       "Soccer",
       "Softball",
@@ -66,7 +45,6 @@ const SEGMENTS = [
       "Swimming",
       "Table Tennis",
       "Tennis",
-      "Toros",
       "Track & Field",
       "Volleyball",
       "Waterpolo",
@@ -82,7 +60,6 @@ const SEGMENTS = [
       "Ballads/Romantic",
       "Blues",
       "Chanson Francaise",
-      "Children's Music",
       "Classical",
       "Country",
       "Dance/Electronic",
@@ -91,47 +68,32 @@ const SEGMENTS = [
       "Holiday",
       "Jazz",
       "Latin",
-      "Medieval/Renaissance",
       "Metal",
       "New Age",
-      "Other",
       "Pop",
       "R&B",
       "Reggae",
       "Religious",
       "Rock",
-      "Undefined",
-      "World",
     ],
   },
   {
     name: "Arts & Theatre",
     genres: [
-      "Children's Theatre",
       "Circus & Specialty Acts",
       "Classical",
-      "Comedy",
       "Cultural",
       "Dance",
-      "Espectaculo",
       "Fashion",
       "Fine Art",
       "Magic & Illusion",
-      "Miscellaneous",
-      "Miscellaneous Theatre",
-      "Multimedia",
       "Music",
       "Opera",
       "Performance Art",
       "Puppetry",
       "Spectacular",
       "Theatre",
-      "Variety",
     ],
-  },
-  {
-    name: "Undefined",
-    genres: ["Undefined"],
   },
   {
     name: "Film",
@@ -145,10 +107,144 @@ const SEGMENTS = [
       "Family",
       "Foreign",
       "Horror",
-      "Miscellaneous",
       "Music",
       "Science Fiction",
       "Urban",
     ],
   },
 ] as const;
+
+const API_KEY = "oGWo9O2GhBZZAdCV1xAAs9FUrClY0QQn";
+const SEARCH_EVENTS_URL = `https://app.ticketmaster.com/discovery/v2/events`;
+export async function getEvents(city: string, genres: Genre[]) {
+  const events: Event[] = [];
+  for (const genre of genres) {
+    const response = await fetch(
+      `${SEARCH_EVENTS_URL}.json?apikey=${API_KEY}&city=${city}&keyword=${genre}`
+    );
+    const data = await response.json();
+    events.push(...data._embedded.events);
+  }
+
+  return events;
+}
+
+interface Image {
+  ratio: string; // Example values: "16_9", "3_2"
+  url: string;
+  width: number;
+  height: number;
+  fallback: boolean;
+}
+
+interface Classification {
+  primary: boolean;
+  segment: {
+    id: string;
+    name: string;
+  };
+  genre: {
+    id: string;
+    name: string;
+  };
+  subGenre: {
+    id: string;
+    name: string;
+  };
+  family: boolean;
+}
+
+interface Sales {
+  public: {
+    startDateTime: string; // ISO 8601 format
+    startTBD: boolean;
+    startTBA: boolean;
+    endDateTime: string; // ISO 8601 format
+  };
+}
+
+interface Dates {
+  start: {
+    localDate: string; // example: '2030-01-01'
+    localTime: string; // example: '11:07:00'
+    dateTime: string; // ISO 8601 format
+    dateTBD: boolean;
+    dateTBA: boolean;
+    timeTBA: boolean;
+    noSpecificTime: boolean;
+  };
+  timezone: string;
+  status: {
+    code: string;
+  };
+  spanMultipleDays: boolean;
+}
+
+interface Links {
+  self: {
+    href: string;
+  };
+  venues: {
+    href: string;
+  }[];
+}
+
+interface Venue {
+  name: string;
+  type: string; // Always expect "venue"
+  id: string;
+  test: boolean;
+  url: string;
+  locale: string;
+  postalCode: string;
+  timezone: string;
+  city: {
+    name: string;
+  };
+  state: {
+    name: string;
+  };
+  country: {
+    name: string;
+    countryCode: string;
+  };
+  address: {
+    line1: string;
+  };
+  location: {
+    longitude: string;
+    latitude: string;
+  };
+  upcomingEvents: {
+    _total: number;
+    _filtered: number;
+  };
+  _links: Links; // Same as Links defined above
+}
+
+interface Embedded {
+  venues: Venue[];
+}
+
+interface Event {
+  name: string;
+  type: string; // Will always be "event"
+  id: string;
+  test: boolean;
+  url: string;
+  locale: string;
+  images: Image[];
+  sales: Sales;
+  dates: Dates;
+  classifications: Classification[];
+  promoter: {
+    id: string;
+    name: string;
+  };
+  promoters: {
+    id: string;
+    name: string;
+  }[];
+  _links: Links;
+  _embedded: Embedded;
+}

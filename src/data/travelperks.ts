@@ -18,6 +18,8 @@ export const CITIES = [
   "Munich",
 ] as const;
 
+export type City = (typeof CITIES)[number];
+
 export const CITIES_WITH_COUNTRY = [
   "Dublin, Ireland",
   "Lisbon, Portugal",
